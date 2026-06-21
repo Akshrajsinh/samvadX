@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explore — SamvadX</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/shell.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/feed.css') }}">
+</head>
+<body data-username="{{ username }}">
+  <div class="app-shell">
+    {% include "_rail.html" %}
+
+    <main class="page-main">
+      <div class="topbar">
+        <h1 class="brand">Explore</h1>
+        <div style="position:relative;">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="userSearchInput" placeholder="Search people">
+          </div>
+          <div class="search-results" id="searchResults" style="display:none;"></div>
+        </div>
+      </div>
+
+      <div class="explore-grid" id="exploreGrid"></div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="{{ url_for('static', filename='js/shell.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/explore.js') }}"></script>
+</body>
+</html>

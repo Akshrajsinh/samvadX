@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SamvadX — Share posts. Chat encrypted. Stay private.</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ink:        #0B0F14;
+    --surface:    #121821;
+    --surface-2:  #1A222E;
+    --surface-3:  #222C3A;
+    --border:     #263240;
+    --text:       #E8EDF2;
+    --text-dim:   #7C8B9A;
+    --mint:       #5EE6C5;
+    --mint-dim:   #2A4A45;
+    --red:        #FF6B6B;
+    --amber:      #F2C46D;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --shadow-pop: 0 12px 32px rgba(0,0,0,0.45);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--ink);
+    color: var(--text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  ::selection { background: var(--mint-dim); color: var(--text); }
+
+  :focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; border-radius: 4px; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------------- Nav ---------------- */
+  .nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    background: rgba(11,15,20,0.7);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s ease, background 0.3s ease;
+  }
+  .nav.scrolled { border-color: var(--border); background: rgba(11,15,20,0.92); }
+
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+  }
+
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-links a:not(.btn) { color: var(--text-dim); font-size: 0.9rem; font-weight: 500; transition: color 0.15s ease; }
+  .nav-links a:not(.btn):hover { color: var(--text); }
+  .nav-cta { display: flex; align-items: center; gap: 12px; }
+
+  @media (max-width: 720px) {
+    .nav-links a:not(.btn) { display: none; }
+  }
+  @media (max-width: 480px) {
+    .nav { padding: 14px 16px; }
+    .nav-brand { font-size: 1rem; }
+    .nav-links { gap: 8px; }
+    .nav-links .btn { padding: 9px 14px; font-size: 0.8rem; }
+    .nav-links .btn-ghost { display: none; }
+  }
+
+  /* ---------------- Buttons ---------------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    font-weight: 600;
+    font-size: 0.92rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--mint); color: #0A1410; box-shadow: 0 0 0 0 rgba(94,230,197,0.5); }
+  .btn-primary:hover { background: #75ecce; box-shadow: 0 6px 24px rgba(94,230,197,0.25); }
+  .btn-ghost { background: transparent; border-color: var(--border); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--mint); color: var(--mint); }
+  .btn-lg { padding: 15px 30px; font-size: 1rem; }
+
+  /* ---------------- Signature lock-pulse element ---------------- */
+  .lock-pulse {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--mint-dim);
+    color: var(--mint);
+    flex-shrink: 0;
+  }
+  .lock-pulse::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1px solid var(--mint);
+    opacity: 0;
+    animation: pulse-ring 2.6s ease-out infinite;
+  }
+  @keyframes pulse-ring {
+    0%   { opacity: 0.55; transform: scale(0.7); }
+    70%  { opacity: 0;    transform: scale(1.6); }
+    100% { opacity: 0;    transform: scale(1.6); }
+  }
+  .nav-brand .lock-pulse { width: 30px; height: 30px; }
+  .nav-brand .lock-pulse svg { width: 15px; height: 15px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lock-pulse::before { animation: none; opacity: 0; }
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  /* ---------------- Hero ---------------- */
+  .hero {
+    position: relative;
+    padding: 168px 24px 100px;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -25%;
+    right: -15%;
+    width: 720px;
+    height: 720px;
+    background: radial-gradient(circle, var(--mint-dim) 0%, transparent 68%);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(94,230,197,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 1120px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 60px;
+    align-items: center;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mint);
+    background: var(--mint-dim);
+    border: 1px solid rgba(94,230,197,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fade-up 0.7s ease 0.05s forwards;
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); animation: dot-blink 1.8s ease infinite; }
+  @keyframes dot-blink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin-bottom: 22px;
+    opacity: 0;
+    animation: fade-up 0.7s ease 0.15s forwards;
+  }
+  .hero h1 .accent { color: var(--mint); }
+
+  .hero p.lede {
+    font-size: 1.08rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    max-width: 480px;
+    margin-bottom: 34px;
+    opacity: 0;
+    animation: fade-up 0.7s ease 0.25s forwards;
+  }
+
+  .hero-ctas {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 36px;
+    opacity: 0;
+    animation: fade-up 0.7s ease 0.35s forwards;
+  }
+
+  .hero-trust {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    opacity: 0;
+    animation: fade-up 0.7s ease 0.45s forwards;
+  }
+  .hero-trust span { display: flex; align-items: center; gap: 7px; }
+  .hero-trust svg { width: 15px; height: 15px; color: var(--mint); flex-shrink: 0; }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------------- Hero visual: phone mockup ---------------- */
+  .hero-visual {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    opacity: 0;
+    animation: fade-up 0.8s ease 0.3s forwards;
+  }
+
+  .phone {
+    width: 280px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 32px;
+    padding: 14px;
+    box-shadow: var(--shadow-pop);
+    position: relative;
+  }
+  .phone-screen {
+    background: var(--ink);
+    border-radius: 22px;
+    overflow: hidden;
+    padding: 16px 14px 18px;
+  }
+  .phone-statusbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+  .phone-statusbar .lock-pulse { width: 20px; height: 20px; }
+  .phone-statusbar .lock-pulse svg { width: 10px; height: 10px; }
+  .phone-statusbar strong { color: var(--text); font-family: var(--font-display); font-size: 0.78rem; }
+
+  .mock-post {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+  .mock-post-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .mock-avatar { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, var(--mint), var(--mint-dim)); flex-shrink: 0; }
+  .mock-post-head .mock-name { font-size: 0.72rem; font-weight: 600; }
+  .mock-img {
+    height: 120px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--surface-3) 0%, var(--mint-dim) 100%);
+    margin-bottom: 8px;
+  }
+  .mock-actions { display: flex; gap: 10px; color: var(--text-dim); }
+  .mock-actions svg { width: 16px; height: 16px; }
+  .mock-like-anim { animation: like-pop 2.4s ease infinite; transform-origin: center; }
+  @keyframes like-pop {
+    0%, 70%, 100% { transform: scale(1); color: var(--text-dim); }
+    78% { transform: scale(1.35); color: var(--red); }
+    86% { transform: scale(1); color: var(--red); }
+  }
+
+  .mock-chat-bubble {
+    display: flex;
+    margin-bottom: 8px;
+  }
+  .mock-chat-bubble.theirs { justify-content: flex-start; }
+  .mock-chat-bubble.mine { justify-content: flex-end; }
+  .mock-bubble-inner {
+    max-width: 75%;
+    padding: 7px 11px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    line-height: 1.4;
+  }
+  .mock-chat-bubble.theirs .mock-bubble-inner { background: var(--surface-2); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .mock-chat-bubble.mine .mock-bubble-inner { background: var(--mint-dim); border: 1px solid var(--mint); color: var(--text); border-bottom-right-radius: 4px; }
+
+  .mock-typing { display: inline-flex; gap: 3px; padding: 2px 0; }
+  .mock-typing span { width: 4px; height: 4px; border-radius: 50%; background: var(--text-dim); animation: typing-bounce 1.2s infinite ease-in-out; }
+  .mock-typing span:nth-child(2) { animation-delay: 0.15s; }
+  .mock-typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes typing-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-3px); opacity: 1; }
+  }
+
+  .phone-float-badge {
+    position: absolute;
+    right: -18px;
+    top: 70px;
+    background: var(--surface-2);
+    border: 1px solid var(--mint);
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--mint);
+    box-shadow: var(--shadow-pop);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: float-badge 4s ease-in-out infinite;
+  }
+  .phone-float-badge svg { width: 12px; height: 12px; }
+  @keyframes float-badge {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @media (max-width: 880px) {
+    .hero-inner { grid-template-columns: 1fr; }
+    .hero-visual { order: -1; margin-bottom: 20px; padding-right: 30px; }
+    .hero p.lede { max-width: 100%; }
+    .phone-float-badge { right: 6px; }
+  }
+
+  /* ---------------- Section shared styles ---------------- */
+  section { padding: 90px 24px; position: relative; }
+  .section-head { max-width: 620px; margin: 0 auto 56px; text-align: center; }
+  .section-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--mint);
+    margin-bottom: 12px;
+    display: block;
+  }
+  .section-head h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 3.4vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 14px;
+  }
+  .section-head p { color: var(--text-dim); font-size: 1rem; line-height: 1.6; }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.in-view { opacity: 1; transform: translateY(0); }
+
+  /* ---------------- Services strip ---------------- */
+  .services {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .services-grid {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .service-card {
+    background: var(--surface);
+    padding: 36px 30px;
+    transition: background 0.2s ease;
+  }
+  .service-card:hover { background: var(--surface-2); }
+  .service-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-sm);
+    background: var(--mint-dim);
+    color: var(--mint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+  .service-icon svg { width: 22px; height: 22px; }
+  .service-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .service-card p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.55; margin-bottom: 14px; }
+  .service-card .service-link { color: var(--mint); font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+  .service-card .service-link svg { width: 13px; height: 13px; transition: transform 0.15s ease; }
+  .service-card:hover .service-link svg { transform: translateX(3px); }
+
+  @media (max-width: 820px) {
+    .services-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ---------------- How it works (animated steps) ---------------- */
+  .steps {
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+  .steps-track {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+  }
+  .steps-track::before {
+    content: '';
+    position: absolute;
+    top: 27px;
+    left: 5%;
+    right: 5%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border) 10%, var(--border) 90%, transparent);
+    z-index: 0;
+  }
+  .step-card { position: relative; z-index: 1; text-align: left; }
+  .step-num {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+    transition: border-color 0.4s ease, color 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
+  }
+  .step-card.in-view .step-num {
+    border-color: var(--mint);
+    color: var(--mint);
+    background: var(--mint-dim);
+    box-shadow: 0 0 0 4px rgba(94,230,197,0.08);
+  }
+  .step-card h3 { font-family: var(--font-display); font-size: 1.05rem; margin-bottom: 8px; font-weight: 600; }
+  .step-card p { color: var(--text-dim); font-size: 0.88rem; line-height: 1.55; }
+
+  @media (max-width: 880px) {
+    .steps-track { grid-template-columns: 1fr; gap: 36px; }
+    .steps-track::before { display: none; }
+  }
+
+  /* ---------------- Feature grid ---------------- */
+  .features-grid {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 26px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .feature-card:hover { transform: translateY(-3px); border-color: var(--mint-dim); }
+  .feature-card .feature-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--mint);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+  }
+  .feature-card .feature-icon svg { width: 18px; height: 18px; }
+  .feature-card h4 { font-family: var(--font-display); font-size: 0.98rem; font-weight: 600; margin-bottom: 6px; }
+  .feature-card p { color: var(--text-dim); font-size: 0.85rem; line-height: 1.55; }
+
+  @media (max-width: 820px) {
+    .features-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .features-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ---------------- Fingerprint demo strip ---------------- */
+  .fingerprint-demo {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    text-align: center;
+  }
+  .fingerprint-demo .lock-pulse { width: 52px; height: 52px; margin: 0 auto 18px; }
+  .fingerprint-demo .lock-pulse svg { width: 24px; height: 24px; }
+  .fingerprint-code {
+    font-family: var(--font-mono);
+    font-size: 1.15rem;
+    letter-spacing: 0.06em;
+    word-spacing: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin: 18px auto;
+    max-width: 420px;
+    color: var(--mint);
+  }
+  .fingerprint-demo p.note { color: var(--text-dim); font-size: 0.85rem; line-height: 1.6; max-width: 460px; margin: 0 auto; }
+
+  /* ---------------- Final CTA band ---------------- */
+  .cta-band {
+    position: relative;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .cta-band::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 500px;
+    background: radial-gradient(circle, var(--mint-dim) 0%, transparent 70%);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .cta-band-inner { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; }
+  .cta-band h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+  .cta-band p { color: var(--text-dim); margin-bottom: 30px; font-size: 1rem; }
+  .cta-band .btn-row { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+
+  /* ---------------- Footer ---------------- */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 36px 24px;
+  }
+  .footer-inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 600; color: var(--text-dim); }
+  .footer-brand .lock-pulse { width: 20px; height: 20px; }
+  .footer-brand .lock-pulse svg { width: 10px; height: 10px; }
+  .footer-meta { color: var(--text-dim); font-size: 0.82rem; text-align: right; }
+  .footer-meta .credit { color: var(--mint); font-weight: 600; }
+</style>
+</head>
+<body>
+
+  <nav class="nav" id="siteNav">
+    <a href="#" class="nav-brand">
+      <span class="lock-pulse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      </span>
+      SamvadX
+    </a>
+    <div class="nav-links">
+      <a href="#services">Services</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="#features">Features</a>
+      <div class="nav-cta">
+        <a href="/login" class="btn btn-ghost">Log in</a>
+        <a href="/register" class="btn btn-primary">Create account</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <span class="eyebrow"><span class="dot"></span>AES-256 encrypted chat, per conversation</span>
+        <h1>Share your moments.<br>Talk in <span class="accent">private</span>.<br>All in one place.</h1>
+        <p class="lede">SamvadX is a social feed and an encrypted messenger built into one app — post, follow, like, comment, and chat with a key that's unique to every conversation.</p>
+        <div class="hero-ctas">
+          <a href="/register" class="btn btn-primary btn-lg">
+            Create your account
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          <a href="/login" class="btn btn-ghost btn-lg">Log in</a>
+        </div>
+        <div class="hero-trust">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Free to use</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Per-thread encryption</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Disappearing messages</span>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="phone-statusbar">
+              <span class="lock-pulse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+              <strong>SamvadX</strong>
+            </div>
+
+            <div class="mock-post">
+              <div class="mock-post-head">
+                <div class="mock-avatar"></div>
+                <span class="mock-name">maya.codes</span>
+              </div>
+              <div class="mock-img"></div>
+              <div class="mock-actions">
+                <svg class="mock-like-anim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              </div>
+            </div>
+
+            <div class="mock-chat-bubble theirs">
+              <div class="mock-bubble-inner">Verified the safety number yet? 🔒</div>
+            </div>
+            <div class="mock-chat-bubble mine">
+              <div class="mock-bubble-inner">Yep — matches on both ends ✅</div>
+            </div>
+            <div class="mock-chat-bubble theirs">
+              <div class="mock-bubble-inner"><span class="mock-typing"><span></span><span></span><span></span></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-float-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          AES-256-GCM
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ SERVICES ============ -->
+  <section id="services" class="services">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-eyebrow">What you get</span>
+        <h2>Three services, one account</h2>
+        <p>Everything lives behind the same login — switch between them from the same left-hand menu once you're in.</p>
+      </div>
+    </div>
+    <div class="services-grid">
+      <div class="service-card reveal">
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V9.5z"/></svg>
+        </div>
+        <h3>Feed</h3>
+        <p>Post photos with a caption and location, like and comment on the people you follow, and discover new accounts in Explore.</p>
+        <a href="/register" class="service-link">Start posting <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+      <div class="service-card reveal">
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </div>
+        <h3>Encrypted chat</h3>
+        <p>Every conversation gets its own AES-256 key. Verify a safety number with the other person, send disappearing messages, react, and reply.</p>
+        <a href="/register" class="service-link">Start chatting <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+      <div class="service-card reveal">
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        </div>
+        <h3>Privacy controls</h3>
+        <p>Make your account private so only approved followers see your posts. Approve or decline requests from one place, any time.</p>
+        <a href="/register" class="service-link">Set your privacy <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section id="how-it-works">
+    <div class="steps">
+      <div class="section-head reveal">
+        <span class="section-eyebrow">How it works</span>
+        <h2>From sign-up to your first encrypted chat</h2>
+        <p>Four steps, in order — each one unlocks the next.</p>
+      </div>
+      <div class="steps-track">
+        <div class="step-card reveal">
+          <div class="step-num">01</div>
+          <h3>Create your account</h3>
+          <p>Pick a username and password, add a profile photo if you like, and you're in — no email required.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">02</div>
+          <h3>Share your first post</h3>
+          <p>Upload a photo, write a caption, tag a location. It shows up in your followers' feed right away.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">03</div>
+          <h3>Send a chat request</h3>
+          <p>Find someone in People, send a request. Once they accept, a private encryption key is created just for that conversation.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">04</div>
+          <h3>Verify and talk freely</h3>
+          <p>Tap the lock icon to compare your safety number, then message, react, and share photos — encrypted the whole way.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURES ============ -->
+  <section id="features">
+    <div class="section-head reveal">
+      <span class="section-eyebrow">Built in</span>
+      <h2>Every feature, accounted for</h2>
+      <p>The small details that make a feed feel alive and a chat feel safe.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+        <h4>Likes &amp; comments</h4>
+        <p>React to posts instantly and keep the conversation going underneath each photo.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h4>Follow &amp; private accounts</h4>
+        <p>Public by default, or lock your account so new followers need your approval first.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <h4>Disappearing messages</h4>
+        <p>Set any message to self-destruct after 30 seconds, 5 minutes, an hour, or a day.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+        <h4>Per-thread keys</h4>
+        <p>Each conversation is encrypted with its own AES-256-GCM key — never reused elsewhere.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+        <h4>Explore &amp; search</h4>
+        <p>Discover public posts and find people by username from one search box.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <h4>Real-time notifications</h4>
+        <p>Know the moment someone likes, comments, follows, or asks to follow you.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINGERPRINT DEMO ============ -->
+  <section>
+    <div class="fingerprint-demo reveal">
+      <span class="lock-pulse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      </span>
+      <h2 style="font-family:var(--font-display);font-size:1.3rem;margin-bottom:6px;">Every conversation gets a safety number</h2>
+      <div class="fingerprint-code">7943 5683 5335 6455 9386</div>
+      <p class="note">This code is generated from your conversation's unique encryption key. Compare it with the other person — in person or on a call — to confirm no one is intercepting your messages.</p>
+    </div>
+  </section>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="cta-band">
+    <div class="cta-band-inner">
+      <h2>Ready to post and chat, privately?</h2>
+      <p>It takes less than a minute to create an account.</p>
+      <div class="btn-row">
+        <a href="/register" class="btn btn-primary btn-lg">
+          Create your account
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a href="/login" class="btn btn-ghost btn-lg">I already have an account</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="lock-pulse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+        SamvadX
+      </div>
+      <div class="footer-meta">
+        Share posts. Chat encrypted. Stay private.<br>
+        Developed by <span class="credit">Akshrajsinh</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Nav background on scroll
+    const nav = document.getElementById('siteNav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
+
+    // Reveal-on-scroll for sections and step cards
+    const revealEls = document.querySelectorAll('.reveal, .step-card');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach(el => io.observe(el));
+
+    // Make entire CTA links keyboard/click friendly is native <a>, nothing extra needed.
+  </script>
+</body>
+</html>

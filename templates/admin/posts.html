@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage posts — SamvadX</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+  <div class="admin-shell">
+    {% set active = 'posts' %}
+    {% include "admin/_sidebar.html" %}
+
+    <main class="admin-main">
+      <div class="admin-header">
+        <h1>Posts</h1>
+      </div>
+
+      <div class="admin-grid-posts">
+        {% for p in posts %}
+        <div class="card admin-post-tile">
+          {% if p['media_type'] == 'video' %}
+          <video src="{{ url_for('post_image', filename=p['image']) }}" muted preload="metadata"></video>
+          <span class="admin-video-badge">▶ video</span>
+          {% else %}
+          <img src="{{ url_for('post_image', filename=p['image']) }}" alt="">
+          {% endif %}
+          <div class="tile-body">
+            <div class="tile-user">@{{ p['username'] }}</div>
+            <div class="tile-stats">{{ p['like_count'] }} likes · {{ p['comment_count'] }} comments</div>
+            <form method="POST" action="{{ url_for('admin_remove_post', post_id=p['id']) }}">
+              <button type="submit" class="btn btn-danger btn-sm" style="width:100%;">Remove</button>
+            </form>
+          </div>
+        </div>
+        {% else %}
+        <p style="color:var(--text-dim);">No posts yet.</p>
+        {% endfor %}
+      </div>
+    </main>
+  </div>
+</body>
+</html>

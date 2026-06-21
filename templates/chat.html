@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat — SamvadX</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/shell.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+</head>
+<body data-username="{{ username }}">
+  <div class="app-shell">
+    {% include "_rail.html" %}
+
+    <main class="page-main">
+      <div class="chat-shell">
+        <section class="contacts-col" id="contactsCol">
+          <div class="contacts-header">
+            <h1 class="brand">Chats</h1>
+            <button id="newChatBtn" title="New chat">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+          <div class="contacts-tabs">
+            <button class="contacts-tab active" data-tab="chats">Chats</button>
+            <button class="contacts-tab" data-tab="requests">Requests
+              <span class="tab-badge" id="reqBadge" style="display:none;">0</span>
+            </button>
+            <button class="contacts-tab" data-tab="people">People</button>
+          </div>
+          <div class="contacts-search">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" id="contactsSearchInput" placeholder="Search">
+            </div>
+          </div>
+          <div class="contacts-list" id="contactsList"></div>
+        </section>
+
+        <section class="thread-col" id="threadCol">
+          <div class="thread-empty" id="threadEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            <div>Select a conversation</div>
+          </div>
+
+          <div id="threadActive" style="display:none; flex-direction:column; height:100%;">
+            <div class="thread-header">
+              <button class="back-btn" id="backToContacts">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              </button>
+              <img id="threadAvatar" src="" alt="" onerror="this.onerror=null;this.src='/uploads/default.png';">
+              <div>
+                <div class="thread-name" id="threadName"></div>
+                <div class="thread-status" id="threadStatus">offline</div>
+              </div>
+              <div class="thread-header-actions">
+                <button id="safetyNumberBtn" title="Verify encryption">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="encryption-banner">
+              <span class="lock-pulse" style="width:16px;height:16px;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+              <span>Messages in this thread are encrypted with a key unique to this conversation.</span>
+              <button id="viewFingerprintLink">Verify</button>
+            </div>
+
+            <div class="messages-pane" id="messagesPane"></div>
+
+            <div class="reply-banner" id="replyBanner" style="display:none;">
+              <div class="reply-content" id="replyBannerText"></div>
+              <button id="cancelReplyBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div class="composer">
+              <div class="composer-actions" style="position:relative;">
+                <button id="emojiBtn" title="Emoji">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                </button>
+                <button id="attachBtn" title="Attach image">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                </button>
+                <input type="file" id="attachInput" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none;">
+                <button id="ttlBtn" title="Disappearing messages">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </button>
+                <div class="ttl-picker" id="ttlPicker">
+                  <button data-ttl="0" class="selected">Off <span></span></button>
+                  <button data-ttl="30">30 seconds <span></span></button>
+                  <button data-ttl="300">5 minutes <span></span></button>
+                  <button data-ttl="3600">1 hour <span></span></button>
+                  <button data-ttl="86400">24 hours <span></span></button>
+                </div>
+              </div>
+              <textarea id="messageInput" placeholder="Message..." rows="1"></textarea>
+              <button class="send-btn" id="sendBtn" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- New chat modal -->
+  <div class="modal-overlay" id="newChatModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Start a chat</h2>
+        <button class="modal-close" data-close="newChatModal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="newChatUserList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Safety number modal -->
+  <div class="modal-overlay" id="safetyModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Verify encryption</h2>
+        <button class="modal-close" data-close="safetyModal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body safety-panel-body">
+        <span class="lock-pulse">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        </span>
+        <div class="safety-fingerprint mono" id="fingerprintCode">— — — —</div>
+        <p>This code is unique to your conversation. Compare it with the other person through a separate channel (in person, a phone call) to confirm no one is intercepting your messages.</p>
+        <p id="threadEstablishedAt" style="font-size:0.72rem;"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="{{ url_for('static', filename='js/shell.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>

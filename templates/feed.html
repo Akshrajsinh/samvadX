@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SamvadX</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/shell.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/feed.css') }}">
+</head>
+<body data-username="{{ username }}">
+  <div class="app-shell">
+    {% include "_rail.html" %}
+
+    <main class="page-main">
+      <div class="topbar">
+        <h1 class="brand">Feed</h1>
+        <button class="btn btn-primary btn-sm" id="openCreatePost">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New post
+        </button>
+      </div>
+
+      <div class="feed-container">
+        <div id="suggestionRail" class="suggestion-rail" style="display:none;"></div>
+        <div id="feedList"></div>
+        <div id="feedSentinel"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create Post Modal -->
+  <div class="modal-overlay" id="createPostModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>New post</h2>
+        <button class="modal-close" data-close="createPostModal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <label class="upload-drop" id="postUploadDrop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div id="postUploadText">Click to choose a photo or video</div>
+          <input type="file" id="postImageInput" accept="image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/quicktime,video/ogg" style="display:none;">
+        </label>
+        <div class="upload-type-tabs">
+          <span id="postMediaTypeHint" class="media-type-chip" style="display:none;">📷 Photo</span>
+        </div>
+        <label class="field-label">Caption</label>
+        <textarea class="field-input" id="postCaption" maxlength="2200" placeholder="Write a caption..."></textarea>
+        <label class="field-label">Location (optional)</label>
+        <input class="field-input" id="postLocation" maxlength="100" placeholder="Add location">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-close="createPostModal">Cancel</button>
+        <button class="btn btn-primary" id="submitPostBtn">Share</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comments Modal -->
+  <div class="modal-overlay" id="commentsModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Comments</h2>
+        <button class="modal-close" data-close="commentsModal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="comments-list" id="commentsList"></div>
+      </div>
+      <div class="modal-footer" style="justify-content:stretch;">
+        <input class="field-input" id="newCommentInput" placeholder="Add a comment..." style="margin:0;">
+        <button class="btn btn-primary btn-sm" id="submitCommentBtn">Post</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="{{ url_for('static', filename='js/shell.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/feed.js') }}"></script>
+</body>
+</html>

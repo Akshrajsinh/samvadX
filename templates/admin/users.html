@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage users — SamvadX</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+  <div class="admin-shell">
+    {% set active = 'users' %}
+    {% include "admin/_sidebar.html" %}
+
+    <main class="admin-main">
+      <div class="admin-header">
+        <h1>Users</h1>
+      </div>
+
+      <div class="card">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Posts</th>
+              <th>Joined</th>
+              <th>Last seen</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users %}
+            <tr>
+              <td><div class="table-user">@{{ u['username'] }}</div></td>
+              <td>{{ u['post_count'] }}</td>
+              <td>{{ u['created_at'] or '—' }}</td>
+              <td>{{ u['last_seen'] or 'never' }}</td>
+              <td>
+                {% if u['is_blocked'] %}
+                <span class="status-pill blocked">Blocked</span>
+                {% else %}
+                <span class="status-pill active">Active</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="POST" action="{{ url_for('admin_users') }}" style="display:inline;">
+                  <input type="hidden" name="username" value="{{ u['username'] }}">
+                  <input type="hidden" name="status" value="{{ 0 if u['is_blocked'] else 1 }}">
+                  <button type="submit" class="btn btn-sm {{ 'btn-ghost' if u['is_blocked'] else 'btn-danger' }}">
+                    {{ 'Unblock' if u['is_blocked'] else 'Block' }}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

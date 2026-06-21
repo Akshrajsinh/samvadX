@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin dashboard — SamvadX</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+  <div class="admin-shell">
+    {% set active = 'dashboard' %}
+    {% include "admin/_sidebar.html" %}
+
+    <main class="admin-main">
+      <div class="admin-header">
+        <h1>Dashboard</h1>
+      </div>
+
+      <div class="stat-grid">
+        <div class="card stat-card">
+          <div class="stat-label">Total users</div>
+          <div class="stat-value">{{ total_users }}</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-label">Online now</div>
+          <div class="stat-value accent">{{ online_users }}</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-label">Messages sent</div>
+          <div class="stat-value">{{ total_messages }}</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-label">Posts</div>
+          <div class="stat-value">{{ total_posts }}</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-label">Likes</div>
+          <div class="stat-value">{{ total_likes }}</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-label">Comments</div>
+          <div class="stat-value">{{ total_comments }}</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-label">Failed logins (24h)</div>
+          <div class="stat-value warn">{{ failed_logins_today }}</div>
+        </div>
+      </div>
+
+      <h2 style="font-family:var(--font-display); font-size:1.1rem; margin-bottom:16px;">Recent posts</h2>
+      <div class="admin-grid-posts">
+        {% for p in recent_posts %}
+        <div class="card admin-post-tile">
+          <img src="{{ url_for('post_image', filename=p['image']) }}" alt="">
+          <div class="tile-body">
+            <div class="tile-user">@{{ p['username'] }}</div>
+            <div class="tile-stats">{{ p['created_at'] }}</div>
+          </div>
+        </div>
+        {% else %}
+        <p style="color:var(--text-dim);">No posts yet.</p>
+        {% endfor %}
+      </div>
+    </main>
+  </div>
+</body>
+</html>
